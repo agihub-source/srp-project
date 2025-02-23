@@ -1,0 +1,597 @@
+syntax = "proto3";
+
+package srp;
+
+// 消息类型枚举
+enum MessageType {
+    UNKNOWN = 0;
+    
+    // 系统消息
+    HANDSHAKE = 1;
+    PING = 2;
+    PONG = 3;
+    
+    // 会话消息
+    SESSION_CREATE = 10;
+    SESSION_JOIN = 11;
+    SESSION_LEAVE = 12;
+    SESSION_CLOSE = 13;
+    SESSION_UPDATE = 14;
+    
+    // 路由消息
+    ROUTE_FIND_NODE = 20;
+    ROUTE_FIND_VALUE = 21;
+    ROUTE_STORE = 22;
+    ROUTE_UPDATE = 23;
+    
+    // 节点消息
+    NODE_JOIN = 30;
+    NODE_LEAVE = 31;
+    NODE_UPDATE = 32;
+    NODE_HEARTBEAT = 33;
+    
+    // 数据消息
+    DATA_STORE = 40;
+    DATA_FETCH = 41;
+    DATA_DELETE = 42;
+    DATA_SYNC = 43;
+    
+    // 联邦学习消息
+    FL_INIT_ROUND = 50;
+    FL_SUBMIT_GRADIENTS = 51;
+    FL_AGGREGATE_RESULT = 52;
+    FL_END_ROUND = 53;
+    
+    // 加密消息
+    ENCRYPTION_KEY_EXCHANGE = 60;
+    ENCRYPTION_KEY_UPDATE = 61;
+    ENCRYPTION_KEY_REVOKE = 62;
+    
+    // 插件消息
+    PLUGIN_REGISTER = 70;
+    PLUGIN_UNREGISTER = 71;
+    PLUGIN_EVENT = 72;
+    PLUGIN_COMMAND = 73;
+}
+
+// 基础消息格式
+message Message {
+    // 消息头
+    MessageHeader header = 1;
+    
+    // 消息体
+    oneof payload {
+        // 系统消息
+        HandshakeMessage handshake = 10;
+        PingMessage ping = 11;
+        PongMessage pong = 12;
+        
+        // 会话消息
+        SessionCreateMessage session_create = 20;
+        SessionJoinMessage session_join = 21;
+        SessionLeaveMessage session_leave = 22;
+        SessionCloseMessage session_close = 23;
+        SessionUpdateMessage session_update = 24;
+        
+        // 路由消息
+        RouteFindNodeMessage route_find_node = 30;
+        RouteFindValueMessage route_find_value = 31;
+        RouteStoreMessage route_store = 32;
+        RouteUpdateMessage route_update = 33;
+        
+        // 节点消息
+        NodeJoinMessage node_join = 40;
+        NodeLeaveMessage node_leave = 41;
+        NodeUpdateMessage node_update = 42;
+        NodeHeartbeatMessage node_heartbeat = 43;
+        
+        // 数据消息
+        DataStoreMessage data_store = 50;
+        DataFetchMessage data_fetch = 51;
+        DataDeleteMessage data_delete = 52;
+        DataSyncMessage data_sync = 53;
+        
+        // 联邦学习消息
+        FLInitRoundMessage fl_init_round = 60;
+        FLSubmitGradientsMessage fl_submit_gradients = 61;
+        FLAggregateResultMessage fl_aggregate_result = 62;
+        FLEndRoundMessage fl_end_round = 63;
+        
+        // 加密消息
+        EncryptionKeyExchangeMessage encryption_key_exchange = 70;
+        EncryptionKeyUpdateMessage encryption_key_update = 71;
+        EncryptionKeyRevokeMessage encryption_key_revoke = 72;
+        
+        // 插件消息
+        PluginRegisterMessage plugin_register = 80;
+        PluginUnregisterMessage plugin_unregister = 81;
+        PluginEventMessage plugin_event = 82;
+        PluginCommandMessage plugin_command = 83;
+    }
+}
+
+// 消息头
+message MessageHeader {
+    // 消息ID
+    string message_id = 1;
+    
+    // 消息类型
+    MessageType type = 2;
+    
+    // 发送者
+    string sender_id = 3;
+    
+    // 接收者
+    string receiver_id = 4;
+    
+    // 会话ID
+    string session_id = 5;
+    
+    // 时间戳
+    int64 timestamp = 6;
+    
+    // 签名
+    bytes signature = 7;
+    
+    // 版本号
+    string version = 8;
+    
+    // 元数据
+    map<string, string> metadata = 9;
+}
+
+// 系统消息
+message HandshakeMessage {
+    // 节点信息
+    Node node = 1;
+    
+    // 支持的协议版本
+    repeated string supported_versions = 2;
+    
+    // 支持的功能
+    repeated string capabilities = 3;
+    
+    // 认证信息
+    bytes auth_data = 4;
+}
+
+message PingMessage {
+    // 时间戳
+    int64 timestamp = 1;
+}
+
+message PongMessage {
+    // 时间戳
+    int64 timestamp = 1;
+    
+    // 延迟
+    int64 latency = 2;
+}
+
+// 节点定义
+message Node {
+    // 节点ID
+    string node_id = 1;
+    
+    // 地址
+    string address = 2;
+    
+    // 端口
+    int32 port = 3;
+    
+    // 节点类型
+    string node_type = 4;
+    
+    // 状态
+    NodeStatus status = 5;
+    
+    // 属性
+    map<string, string> attributes = 6;
+    
+    // 创建时间
+    int64 created_at = 7;
+    
+    // 最后更新时间
+    int64 updated_at = 8;
+}
+
+// 节点状态
+enum NodeStatus {
+    NODE_UNKNOWN = 0;
+    NODE_ONLINE = 1;
+    NODE_OFFLINE = 2;
+    NODE_BUSY = 3;
+    NODE_ERROR = 4;
+}
+
+// 会话消息
+message SessionCreateMessage {
+    // 会话配置
+    SessionConfig config = 1;
+    
+    // 初始参与者
+    repeated string participants = 2;
+}
+
+message SessionJoinMessage {
+    // 会话ID
+    string session_id = 1;
+    
+    // 参与者信息
+    Node participant = 2;
+}
+
+message SessionLeaveMessage {
+    // 会话ID
+    string session_id = 1;
+    
+    // 离开原因
+    string reason = 2;
+}
+
+message SessionCloseMessage {
+    // 会话ID
+    string session_id = 1;
+    
+    // 关闭原因
+    string reason = 2;
+}
+
+message SessionUpdateMessage {
+    // 会话ID
+    string session_id = 1;
+    
+    // 更新类型
+    string update_type = 2;
+    
+    // 更新数据
+    bytes update_data = 3;
+}
+
+// 会话配置
+message SessionConfig {
+    // 会话类型
+    string session_type = 1;
+    
+    // 会话模式
+    string session_mode = 2;
+    
+    // 超时时间
+    int32 timeout = 3;
+    
+    // 最大参与者数量
+    int32 max_participants = 4;
+    
+    // 安全选项
+    SecurityOptions security = 5;
+    
+    // 自定义配置
+    map<string, string> custom_config = 6;
+}
+
+// 安全选项
+message SecurityOptions {
+    // 加密算法
+    string encryption_algorithm = 1;
+    
+    // 认证方式
+    string auth_method = 2;
+    
+    // 密钥交换方式
+    string key_exchange = 3;
+    
+    // 安全级别
+    SecurityLevel security_level = 4;
+}
+
+// 安全级别
+enum SecurityLevel {
+    SECURITY_UNKNOWN = 0;
+    SECURITY_NONE = 1;
+    SECURITY_LOW = 2;
+    SECURITY_MEDIUM = 3;
+    SECURITY_HIGH = 4;
+}
+
+// 路由消息
+message RouteFindNodeMessage {
+    // 目标ID
+    string target_id = 1;
+    
+    // 查找数量
+    int32 limit = 2;
+}
+
+message RouteFindValueMessage {
+    // 键
+    string key = 1;
+}
+
+message RouteStoreMessage {
+    // 键
+    string key = 1;
+    
+    // 值
+    bytes value = 2;
+    
+    // 存储时间
+    int64 store_time = 3;
+    
+    // 过期时间
+    int64 expire_time = 4;
+}
+
+message RouteUpdateMessage {
+    // 更新类型
+    string update_type = 1;
+    
+    // 路由表
+    repeated Node nodes = 2;
+}
+
+// 节点消息
+message NodeJoinMessage {
+    // 节点信息
+    Node node = 1;
+    
+    // 初始路由表
+    repeated Node routing_table = 2;
+}
+
+message NodeLeaveMessage {
+    // 节点ID
+    string node_id = 1;
+    
+    // 离开原因
+    string reason = 2;
+}
+
+message NodeUpdateMessage {
+    // 节点信息
+    Node node = 1;
+    
+    // 更新类型
+    string update_type = 2;
+}
+
+message NodeHeartbeatMessage {
+    // 节点ID
+    string node_id = 1;
+    
+    // 时间戳
+    int64 timestamp = 2;
+    
+    // 状态信息
+    map<string, string> status = 3;
+}
+
+// 数据消息
+message DataStoreMessage {
+    // 数据ID
+    string data_id = 1;
+    
+    // 数据内容
+    bytes data = 2;
+    
+    // 数据类型
+    string data_type = 3;
+    
+    // 存储选项
+    DataStoreOptions options = 4;
+}
+
+message DataFetchMessage {
+    // 数据ID
+    string data_id = 1;
+}
+
+message DataDeleteMessage {
+    // 数据ID
+    string data_id = 1;
+}
+
+message DataSyncMessage {
+    // 同步类型
+    string sync_type = 1;
+    
+    // 同步数据
+    map<string, bytes> data = 2;
+}
+
+// 数据存储选项
+message DataStoreOptions {
+    // 复制因子
+    int32 replication_factor = 1;
+    
+    // 一致性级别
+    ConsistencyLevel consistency_level = 2;
+    
+    // 过期时间
+    int64 ttl = 3;
+    
+    // 压缩选项
+    bool compress = 4;
+    
+    // 加密选项
+    bool encrypt = 5;
+}
+
+// 一致性级别
+enum ConsistencyLevel {
+    CONSISTENCY_UNKNOWN = 0;
+    CONSISTENCY_ONE = 1;
+    CONSISTENCY_QUORUM = 2;
+    CONSISTENCY_ALL = 3;
+}
+
+// 联邦学习消息
+message FLInitRoundMessage {
+    // 轮次ID
+    string round_id = 1;
+    
+    // 全局模型
+    bytes global_model = 2;
+    
+    // 训练配置
+    FLTrainingConfig config = 3;
+}
+
+message FLSubmitGradientsMessage {
+    // 轮次ID
+    string round_id = 1;
+    
+    // 梯度数据
+    bytes gradients = 2;
+    
+    // 训练指标
+    map<string, float> metrics = 3;
+}
+
+message FLAggregateResultMessage {
+    // 轮次ID
+    string round_id = 1;
+    
+    // 聚合模型
+    bytes aggregated_model = 2;
+    
+    // 全局指标
+    map<string, float> global_metrics = 3;
+}
+
+message FLEndRoundMessage {
+    // 轮次ID
+    string round_id = 1;
+    
+    // 结束原因
+    string reason = 2;
+}
+
+// 联邦学习训练配置
+message FLTrainingConfig {
+    // 训练轮数
+    int32 num_rounds = 1;
+    
+    // 本地训练配置
+    LocalTrainingConfig local_config = 2;
+    
+    // 聚合算法
+    string aggregation_algorithm = 3;
+    
+    // 隐私预算
+    float privacy_budget = 4;
+}
+
+// 本地训练配置
+message LocalTrainingConfig {
+    // 批次大小
+    int32 batch_size = 1;
+    
+    // 学习率
+    float learning_rate = 2;
+    
+    // 本地轮数
+    int32 num_local_epochs = 3;
+    
+    // 优化器配置
+    map<string, string> optimizer_config = 4;
+}
+
+// 加密消息
+message EncryptionKeyExchangeMessage {
+    // 公钥
+    bytes public_key = 1;
+    
+    // 密钥ID
+    string key_id = 2;
+    
+    // 加密算法
+    string algorithm = 3;
+    
+    // 密钥用途
+    string purpose = 4;
+}
+
+message EncryptionKeyUpdateMessage {
+    // 密钥ID
+    string key_id = 1;
+    
+    // 新密钥数据
+    bytes new_key_data = 2;
+    
+    // 过期时间
+    int64 expire_time = 3;
+}
+
+message EncryptionKeyRevokeMessage {
+    // 密钥ID
+    string key_id = 1;
+    
+    // 撤销原因
+    string reason = 2;
+}
+
+// 插件消息
+message PluginRegisterMessage {
+    // 插件信息
+    Plugin plugin = 1;
+}
+
+message PluginUnregisterMessage {
+    // 插件ID
+    string plugin_id = 1;
+    
+    // 注销原因
+    string reason = 2;
+}
+
+message PluginEventMessage {
+    // 插件ID
+    string plugin_id = 1;
+    
+    // 事件类型
+    string event_type = 2;
+    
+    // 事件数据
+    bytes event_data = 3;
+}
+
+message PluginCommandMessage {
+    // 插件ID
+    string plugin_id = 1;
+    
+    // 命令
+    string command = 2;
+    
+    // 参数
+    map<string, string> parameters = 3;
+}
+
+// 插件定义
+message Plugin {
+    // 插件ID
+    string plugin_id = 1;
+    
+    // 插件名称
+    string name = 2;
+    
+    // 版本号
+    string version = 3;
+    
+    // 描述
+    string description = 4;
+    
+    // 作者
+    string author = 5;
+    
+    // 依赖
+    repeated string dependencies = 6;
+    
+    // 配置
+    map<string, string> config = 7;
+    
+    // 权限
+    repeated string permissions = 8;
+    
+    // 能力
+    repeated string capabilities = 9;
+}
